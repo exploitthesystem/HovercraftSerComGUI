@@ -33,6 +33,7 @@ namespace HovercraftSerComGUI
         {
             string strData, opStr;
             bool isPortValid;
+            byte[] data;
             UInt32 op;
 
             isPortValid = InitializePort();
@@ -60,7 +61,9 @@ namespace HovercraftSerComGUI
 
                 strData = opStr + lengthTextBox.Text + regStartTextBox.Text + dataTextBox.Text;
 
-                TransmitFrame(strData);
+                data = HexStrToByteArray(strData);
+
+                TransmitFrame(data);
 
                 if (serialPort.IsOpen)
                     serialPort.Close();
@@ -136,24 +139,9 @@ namespace HovercraftSerComGUI
         /// Transmits a frame of the form <0xAA55, strData, 0x55AA>
         /// </summary>
         /// <param name="strData"></param>
-        private void TransmitFrame(string strData)
+        private void TransmitFrame(byte[] data)
         {
-            byte[] data;
-
-            // Add sync header and footer
-            strData = "AA55" + strData + "55AA";
-
-            // Convert string message into data byte array
-            data = HexStrToByteArray(strData);
-
-            // Set the read/write bit in the OP field
-            /*if (rwCheckBox.Checked)
-                data[2] = (byte)(data[2] | 0x01);
-            else
-                data[2] = (byte)(data[2] & 0xFE);*/
-
             serialPort.Write(data, 0, data.Length);
-            sentLabel.Text = "0x" + strData;
         }
 
         /// <summary>
@@ -199,56 +187,53 @@ namespace HovercraftSerComGUI
 
         private async void RunMotors(object sender)
         {
-            string strData, op, speed;
             bool isPortValid;
-            ushort value;
+            byte op;
+            byte[] speed = new byte[4];
+            byte[] data = new byte[8];
 
             if (syncMotorBox.Checked)
             {
-                op = "22"; // sync motors op
+                op = 0x22; // sync motors op
                 if (sender == leftMotorBar)
                 {
-                    value = (ushort)leftMotorBar.Value;
+                    speed = BitConverter.GetBytes(leftMotorBar.Value);
                     rightMotorBar.Value = leftMotorBar.Value;
                 }
                 else
                 {
-                    value = (ushort)rightMotorBar.Value;
+                    speed = BitConverter.GetBytes(rightMotorBar.Value);
                     leftMotorBar.Value = rightMotorBar.Value;
                 }
             }
             else if (sender == leftMotorBar)
             {
-                op = "24"; // left motor op
-                value = (ushort)leftMotorBar.Value;
+                op = 0x24; // left motor op
+                rightMotorBar.Value = leftMotorBar.Value;
             }
             else
             {
-                op = "26"; // right motor op
-                value = (ushort)rightMotorBar.Value;
+                op = 0x26; // right motor op
+                speed = BitConverter.GetBytes(rightMotorBar.Value);
             }
 
             isPortValid = InitializePort();
 
             if (isPortValid)
             {
+                data[0] = 0xAA;     // start sync 1st byte
+                data[1] = 0x55;     // start sync 2nd byte
+                data[2] = op;       // operation
+                data[3] = 0x02;     // length
+                data[4] = speed[1]; // upper speed byte
+                data[5] = speed[0]; // lower speed byte
+                data[6] = 0x55;     // end sync 1st byte
+                data[7] = 0xAA;     // end sync 2nd byte
+
                 if (!serialPort.IsOpen)
                     serialPort.Open();
 
-                speed = value.ToString("X");
-
-                if (speed.Length == 3)
-                {
-                    speed = "0" + speed;
-                }
-                else if (speed.Length == 2)
-                {
-                    speed = "00" + speed;
-                }
-
-                strData = op + "02" + speed;
-
-                TransmitFrame(strData);
+                TransmitFrame(data);
 
                 if (serialPort.IsOpen)
                     serialPort.Close();
