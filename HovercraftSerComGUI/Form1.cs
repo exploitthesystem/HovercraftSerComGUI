@@ -212,7 +212,7 @@ namespace HovercraftSerComGUI
             else if (sender == leftMotorBar)
             {
                 op = 0x24; // left motor op
-                rightMotorBar.Value = leftMotorBar.Value;
+                speed = BitConverter.GetBytes(leftMotorBar.Value);
             }
             else
             {
