@@ -3,7 +3,7 @@ using System.Collections;
 using System.Data;
 using System.IO.Ports;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace HovercraftSerComGUI
@@ -51,11 +51,6 @@ namespace HovercraftSerComGUI
                     opStr = op.ToString("X");
                 }
 
-                opTextBox.Enabled = false;
-                rwCheckBox.Enabled = false;
-                lengthTextBox.Enabled = false;
-                dataTextBox.Enabled = false;
-
                 if (!serialPort.IsOpen)
                     serialPort.Open();
 
@@ -68,17 +63,30 @@ namespace HovercraftSerComGUI
                 if (serialPort.IsOpen)
                     serialPort.Close();
 
-                opTextBox.Enabled = true;
-                rwCheckBox.Enabled = true;
-                lengthTextBox.Enabled = true;
-                dataTextBox.Enabled = true;
+                Thread.Sleep(1);
             }
         }
 
         // Toggle lift fan on or off.
         private void FanButton_Click(object sender, EventArgs e)
         {
+            bool isPortValid;
+            byte[] data = new byte[6];
 
+            isPortValid = InitializePort();
+
+            if (isPortValid)
+            {
+                data[0] = 0xAA;
+                data[1] = 0x55;
+                data[2] = 0x29;
+                data[3] = 0x00;
+                data[4] = 0x55;
+                data[5] = 0xAA;
+
+                TransmitFrame(data);
+                Thread.Sleep(1);
+            }
         }
 
         // Populates the combo text box with available
@@ -185,7 +193,8 @@ namespace HovercraftSerComGUI
             this.Invoke(new MethodInvoker(() => rcvdLabel.Text = data.ToString()));
         }
 
-        private async void RunMotors(object sender)
+        // Send motor speed data for left, right, or both motors.
+        private void RunMotors(object sender)
         {
             bool isPortValid;
             byte op;
@@ -238,7 +247,7 @@ namespace HovercraftSerComGUI
                 if (serialPort.IsOpen)
                     serialPort.Close();
 
-                await Task.Delay(10);
+                Thread.Sleep(1);
             }
         }
 
