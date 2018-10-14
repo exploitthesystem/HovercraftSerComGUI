@@ -15,7 +15,7 @@ namespace HovercraftSerComGUI
         public Form1()
         {
             InitializeComponent();
-            comBox.Click += new EventHandler(COMbox_Clicked);
+            comBox.Click += new EventHandler(COMbox_Click);
             leftMotorBar.Scroll += new EventHandler(Bar_Scroll);
             rightMotorBar.Scroll += new EventHandler(Bar_Scroll);
 
@@ -72,9 +72,15 @@ namespace HovercraftSerComGUI
             }
         }
 
+        // Toggle lift fan on or off.
+        private void FanButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
         // Populates the combo text box with available
         // COM port names.
-        private void COMbox_Clicked(object sender, EventArgs e)
+        private void COMbox_Click(object sender, EventArgs e)
         {
             string[] ports = SerialPort.GetPortNames();
 
@@ -133,9 +139,6 @@ namespace HovercraftSerComGUI
         private void TransmitFrame(string strData)
         {
             byte[] data;
-
-            if (strData.Length % 2 != 0)
-                strData = strData + "0";
 
             // Add sync header and footer
             strData = "AA55" + strData + "55AA";
@@ -229,11 +232,6 @@ namespace HovercraftSerComGUI
 
             if (isPortValid)
             {
-                opTextBox.Enabled = false;
-                rwCheckBox.Enabled = false;
-                lengthTextBox.Enabled = false;
-                dataTextBox.Enabled = false;
-
                 if (!serialPort.IsOpen)
                     serialPort.Open();
 
@@ -256,11 +254,6 @@ namespace HovercraftSerComGUI
                     serialPort.Close();
 
                 await Task.Delay(10);
-
-                opTextBox.Enabled = true;
-                rwCheckBox.Enabled = true;
-                lengthTextBox.Enabled = true;
-                dataTextBox.Enabled = true;
             }
         }
 
