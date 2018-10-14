@@ -163,10 +163,10 @@ namespace HovercraftSerComGUI
             {
                 next_byte = serialPort.ReadByte();
 
-                if (next_byte.ToString("X") == "AA")
+                if (next_byte == 0xAA)
                     read_aa = true;
 
-                if (next_byte.ToString("X") == "55" && read_aa)
+                if (next_byte == 0x55 && read_aa)
                 {
                     header_received = true;
                     read_aa = false;
@@ -174,17 +174,17 @@ namespace HovercraftSerComGUI
 
                 if (header_received)
                 {
-                    if (next_byte.ToString("X") == "55")
+                    if (next_byte == 0x55)
                         read_55 = true;
 
-                    if (next_byte.ToString("X") == "AA" && read_55)
+                    if (next_byte == 0xAA && read_55)
                         read_byte = false;
                 }
 
                 data.Add(next_byte.ToString("X"));
             }
 
-            this.Invoke(new MethodInvoker(() => rcvdLabel.Text = data.ToString()));
+            Invoke(new MethodInvoker(() => rcvdLabel.Text = "0x" + data.ToString()));
         }
 
         // Send motor speed data for left, right, or both motors.
@@ -226,7 +226,7 @@ namespace HovercraftSerComGUI
             {
                 data[0] = 0xAA;     // start sync 1st byte
                 data[1] = 0x55;     // start sync 2nd byte
-                data[2] = op;       // operation
+                data[2] = op;       // motor
                 data[3] = 0x02;     // length
                 data[4] = speed[1]; // upper speed byte
                 data[5] = speed[0]; // lower speed byte
