@@ -31,32 +31,24 @@ namespace HovercraftSerComGUI
         /// <param name="e"></param>
         private void SendButton_Click(object sender, EventArgs e)
         {
-            string strData, opStr;
+            string strData;
             bool isPortValid;
             byte[] data;
-            UInt32 op;
 
             isPortValid = InitializePort();
 
             if (isPortValid)
             {
-                if (!UInt32.TryParse(opTextBox.Text, System.Globalization.NumberStyles.HexNumber, null, out op))
-                    return;
-
-                opStr = opTextBox.Text;
-
-                if (rwCheckBox.Checked)
-                {
-                    op++;
-                    opStr = op.ToString("X");
-                }
-
                 if (!serialPort.IsOpen)
                     serialPort.Open();
 
-                strData = opStr + lengthTextBox.Text + regStartTextBox.Text + dataTextBox.Text;
+                strData = opTextBox.Text + lengthTextBox.Text + regStartTextBox.Text + dataTextBox.Text;
+                strData = "AA55" + strData + "55AA";
 
                 data = HexStrToByteArray(strData);
+
+                if (rwCheckBox.Checked)
+                    data[2] = (byte)(data[2] | 0x01);
 
                 TransmitFrame(data);
 
@@ -150,6 +142,8 @@ namespace HovercraftSerComGUI
         private void TransmitFrame(byte[] data)
         {
             serialPort.Write(data, 0, data.Length);
+
+            sentLabel.Text = "0x" + ByteArrayToHexStr(data);
         }
 
         /// <summary>
@@ -251,12 +245,19 @@ namespace HovercraftSerComGUI
             }
         }
 
+        // Converts a hexadecimal string to an array of bytes.
         private byte[] HexStrToByteArray(string hex)
         {
             return Enumerable.Range(0, hex.Length)
                  .Where(x => x % 2 == 0)
                  .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
                  .ToArray();
+        }
+
+        // Converts an array of bytes to a hexadecimal string.
+        private string ByteArrayToHexStr(byte[] ba)
+        {
+            return BitConverter.ToString(ba).Replace("-", "");
         }
     }
 }
