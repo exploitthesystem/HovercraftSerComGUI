@@ -15,9 +15,6 @@ namespace HovercraftSerComGUI
         public Form1()
         {
             InitializeComponent();
-            comBox.Click += new EventHandler(COMbox_Click);
-            leftMotorBar.Scroll += new EventHandler(Bar_Scroll);
-            rightMotorBar.Scroll += new EventHandler(Bar_Scroll);
 
             //Thread newThread = new Thread(ReceiveFrame);
             //newThread.Start();
@@ -95,9 +92,9 @@ namespace HovercraftSerComGUI
             RunMotors(sender);
         }
 
-        private void syncMotorBox_CheckedChanged(object sender, EventArgs e)
+        private void SyncMotorBox_CheckedChanged(object sender, EventArgs e)
         {
-            if (syncMotorBox.Checked)
+            if (SyncMotorBox.Checked)
                 rightMotorBar.Value = leftMotorBar.Value;
         }
 
@@ -195,7 +192,7 @@ namespace HovercraftSerComGUI
             byte[] speed = new byte[4];
             byte[] data = new byte[8];
 
-            if (syncMotorBox.Checked)
+            if (SyncMotorBox.Checked)
             {
                 op = 0x22; // sync motors op
                 if (sender == leftMotorBar)
