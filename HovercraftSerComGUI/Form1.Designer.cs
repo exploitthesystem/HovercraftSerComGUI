@@ -327,6 +327,7 @@
             this.comBox.Size = new System.Drawing.Size(92, 21);
             this.comBox.TabIndex = 38;
             this.comBox.Click += new System.EventHandler(this.COMbox_Click);
+            this.comBox.SelectedIndexChanged += new System.EventHandler(this.COMbox_SelectIndexChanged);
             // 
             // FanButton
             // 

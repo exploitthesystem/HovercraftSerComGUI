@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Data;
 using System.IO.Ports;
 using System.Linq;
@@ -11,13 +10,12 @@ namespace HovercraftSerComGUI
     public partial class Form1 : Form
     {
         private SerialPort serialPort;
+        private bool continue_read = true;
+        private bool connected = false;
 
         public Form1()
         {
             InitializeComponent();
-
-            //Thread newThread = new Thread(ReceiveFrame);
-            //newThread.Start();
         }
 
         /// <summary>
@@ -29,12 +27,9 @@ namespace HovercraftSerComGUI
         private void SendButton_Click(object sender, EventArgs e)
         {
             string strData;
-            bool isPortValid;
             byte[] data;
 
-            isPortValid = InitializePort();
-
-            if (isPortValid)
+            if (connected)
             {
                 if (!serialPort.IsOpen)
                     serialPort.Open();
@@ -59,12 +54,9 @@ namespace HovercraftSerComGUI
         // Toggle lift fan on or off.
         private void FanButton_Click(object sender, EventArgs e)
         {
-            bool isPortValid;
             byte[] data = new byte[6];
 
-            isPortValid = InitializePort();
-
-            if (isPortValid)
+            if (connected)
             {
                 data[0] = 0xAA;
                 data[1] = 0x55;
@@ -74,24 +66,75 @@ namespace HovercraftSerComGUI
                 data[5] = 0xAA;
 
                 TransmitFrame(data);
+
                 Thread.Sleep(1);
             }
         }
 
-        // Populates the combo text box with available
-        // COM port names.
+        /// <summary>
+        /// COM drop box event handler. Populates the box with available
+        /// COM port names when clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void COMbox_Click(object sender, EventArgs e)
         {
             string[] ports = SerialPort.GetPortNames();
 
+            comBox.Items.Clear();
             comBox.Items.AddRange(ports);
         }
 
+        /// <summary>
+        /// COM drop box event handler. Initializes COM port when an
+        /// item is selected from the list.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void COMbox_SelectIndexChanged(object sender, EventArgs e)
+        {
+            if (connected && comBox.Text == serialPort.PortName)
+                return;
+
+            bool isPortValid = InitializePort();
+
+            if (isPortValid)
+            {
+                try
+                {
+                    serialPort.Open();
+                    Thread recThread = new Thread(ReceiveFrame);
+                    recThread.Start();
+                    connected = true;
+                }
+                catch (Exception)
+                {
+                    rcvdLabel.Text = "ERROR";
+                    connected = false;
+                    return;
+                }
+            }
+            else
+                connected = false;
+        }
+
+        /// <summary>
+        /// Event handler for the motor bars. If scrolled, sends
+        /// the corresponding value as speed to the motors.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Bar_Scroll(object sender, EventArgs e)
         {
             RunMotors(sender);
         }
 
+        /// <summary>
+        /// Event handler for the motor synchronization check box.If checked,
+        /// ensures that both motors receive the same speed settings.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SyncMotorBox_CheckedChanged(object sender, EventArgs e)
         {
             if (SyncMotorBox.Checked)
@@ -112,7 +155,7 @@ namespace HovercraftSerComGUI
             serialPort = new SerialPort
             {
                 PortName = comBox.Text,
-                BaudRate = 19200,
+                BaudRate = 9600,
                 Parity = Parity.None,
                 StopBits = StopBits.One,
                 DataBits = 8,
@@ -138,89 +181,135 @@ namespace HovercraftSerComGUI
         /// <param name="strData"></param>
         private void TransmitFrame(byte[] data)
         {
-            serialPort.Write(data, 0, data.Length);
+            try
+            {
+                serialPort.Write(data, 0, data.Length);
 
-            sentLabel.Text = "0x" + ByteArrayToHexStr(data);
+                sentLabel.Text = "0x" + ByteArrayToHexStr(data);
+            }
+            catch (Exception)
+            {
+                rcvdLabel.Text = "ERROR. Could not send.";
+            }
         }
 
         /// <summary>
-        /// Receives a frame of the form <0xAA55, data, 0x55AA>
+        /// Receives a frame of the form <0xAA55, data, 0x55AA>.
+        /// Reads from serial port buffer and checks for start sync (0xAA55)
+        /// and end sync (0x55AA) sequences.
         /// </summary>
+        uint CLEAR_BUFF_TIMEOUT = 2000000000;
+
         private void ReceiveFrame()
         {
-            bool read_byte = true;
-            bool read_aa = false;
-            bool read_55 = false;
-            bool header_received = false;
+            byte[] inBuffer = new byte[64];
+            uint clearBuffCounter = 0;
+            uint bytesInBuffer = 0;
 
-            int next_byte;
-            ArrayList data = new ArrayList();
-
-            while (read_byte)
+            while (connected)
             {
-                next_byte = serialPort.ReadByte();
+                rcvdLabel.Invoke((MethodInvoker)delegate { rcvdLabel.Text = serialPort.BytesToRead.ToString(); });
 
-                if (next_byte == 0xAA)
-                    read_aa = true;
-
-                if (next_byte == 0x55 && read_aa)
+                if (serialPort.BytesToRead > 0)
                 {
-                    header_received = true;
-                    read_aa = false;
+                    inBuffer[bytesInBuffer] = (byte)serialPort.ReadByte();
+
+                    if (bytesInBuffer > 0 || inBuffer[bytesInBuffer] == 0xaa)
+                    {
+                        if (bytesInBuffer == 1 && inBuffer[bytesInBuffer] != 0x55)
+                            bytesInBuffer = 0;
+                        else
+                            bytesInBuffer++;
+
+                    }
+                  
+                    //CHECK
+                    if (bytesInBuffer > 5 && CheckValidFrame(inBuffer, bytesInBuffer))
+                    {
+                        ParseIncomingBuffer(inBuffer);
+
+                        bytesInBuffer = 0;
+                    }
+
+                    clearBuffCounter = 0;
                 }
 
-                if (header_received)
+                if (clearBuffCounter > CLEAR_BUFF_TIMEOUT)
                 {
-                    if (next_byte == 0x55)
-                        read_55 = true;
-
-                    if (next_byte == 0xAA && read_55)
-                        read_byte = false;
+                    serialPort.DiscardInBuffer();
+                    bytesInBuffer = 0;
+                    clearBuffCounter = 0;
                 }
+            }
+        }
 
-                data.Add(next_byte.ToString("X"));
+        /// <summary>
+        /// Verifies that the frame captured by ReceiveFrame conforms to
+        /// protocol specifications.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        private bool CheckValidFrame(byte[] data, uint length)
+        {
+            if (data[0] == 0xAA && data[1] == 0x55 && data[length - 2] == 0x55 && data[length - 1] == 0xaa)
+                if (data[3] == length - 6)
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Processes received frame. Prints frame contents.
+        /// </summary>
+        /// <param name="data"></param>
+        private void ParseIncomingBuffer(byte[] data)
+        {
+            // TODO More than print contents.
+
+            foreach (byte b in data)
+            {
+                Console.WriteLine("" + b);
             }
 
-            Invoke(new MethodInvoker(() => rcvdLabel.Text = "0x" + data.ToString()));
+            Invoke((MethodInvoker)delegate { rcvdLabel.Text = "0x" + ByteArrayToHexStr(data); });
         }
 
         // Send motor speed data for left, right, or both motors.
         private void RunMotors(object sender)
         {
-            bool isPortValid;
             byte op;
             byte[] speed = new byte[4];
             byte[] data = new byte[8];
 
-            if (SyncMotorBox.Checked)
+            if (connected)
             {
-                op = 0x22; // sync motors op
-                if (sender == leftMotorBar)
+                if (SyncMotorBox.Checked)
                 {
+                    op = 0x22; // sync motors op
+                    if (sender == leftMotorBar)
+                    {
+                        speed = BitConverter.GetBytes(leftMotorBar.Value);
+                        rightMotorBar.Value = leftMotorBar.Value;
+                    }
+                    else
+                    {
+                        speed = BitConverter.GetBytes(rightMotorBar.Value);
+                        leftMotorBar.Value = rightMotorBar.Value;
+                    }
+                }
+                else if (sender == leftMotorBar)
+                {
+                    op = 0x24; // left motor op
                     speed = BitConverter.GetBytes(leftMotorBar.Value);
-                    rightMotorBar.Value = leftMotorBar.Value;
                 }
                 else
                 {
+                    op = 0x26; // right motor op
                     speed = BitConverter.GetBytes(rightMotorBar.Value);
-                    leftMotorBar.Value = rightMotorBar.Value;
                 }
-            }
-            else if (sender == leftMotorBar)
-            {
-                op = 0x24; // left motor op
-                speed = BitConverter.GetBytes(leftMotorBar.Value);
-            }
-            else
-            {
-                op = 0x26; // right motor op
-                speed = BitConverter.GetBytes(rightMotorBar.Value);
-            }
 
-            isPortValid = InitializePort();
-
-            if (isPortValid)
-            {
+                // Data to send for motor speed control
                 data[0] = 0xAA;     // start sync 1st byte
                 data[1] = 0x55;     // start sync 2nd byte
                 data[2] = op;       // motor
@@ -230,13 +319,7 @@ namespace HovercraftSerComGUI
                 data[6] = 0x55;     // end sync 1st byte
                 data[7] = 0xAA;     // end sync 2nd byte
 
-                if (!serialPort.IsOpen)
-                    serialPort.Open();
-
                 TransmitFrame(data);
-
-                if (serialPort.IsOpen)
-                    serialPort.Close();
 
                 Thread.Sleep(1);
             }
