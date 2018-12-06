@@ -10,7 +10,7 @@ namespace HovercraftSerComGUI
     public partial class Form1 : Form
     {
         private SerialPort serialPort;
-        private bool continue_read = true;
+        private Semaphore sem = new Semaphore(0, 1);
         private bool connected = false;
 
         public Form1()
@@ -48,6 +48,27 @@ namespace HovercraftSerComGUI
                     serialPort.Close();
 
                 Thread.Sleep(1);
+            }
+        }
+
+        private void SenseButton_Click(object sender, EventArgs e)
+        {
+            if (connected)
+            {
+                byte[] data = new byte[8];
+
+                data[0] = 0xAA; // start sync
+                data[1] = 0x55;
+                data[2] = 0x2D; // opcode I2C
+                data[3] = 0x02; // bytes to read
+                data[4] = 0x90; // slave address
+                data[5] = 0x00; // register
+                data[6] = 0x55; // end sync
+                data[7] = 0xAA;
+
+                TransmitFrame(data);
+
+                TempLabel.Text = "DEFAULT";
             }
         }
 
@@ -104,8 +125,11 @@ namespace HovercraftSerComGUI
                 {
                     serialPort.Open();
                     Thread recThread = new Thread(ReceiveFrame);
+                    //Thread senseThread = new Thread(ReadSensor);
                     recThread.Start();
+                    //senseThread.Start();
                     connected = true;
+                    sem.Release(1);
                 }
                 catch (Exception)
                 {
@@ -181,6 +205,8 @@ namespace HovercraftSerComGUI
         /// <param name="strData"></param>
         private void TransmitFrame(byte[] data)
         {
+            sem.WaitOne();
+
             try
             {
                 serialPort.Write(data, 0, data.Length);
@@ -191,6 +217,8 @@ namespace HovercraftSerComGUI
             {
                 rcvdLabel.Text = "ERROR. Could not send.";
             }
+
+            sem.Release();
         }
 
         /// <summary>
@@ -243,6 +271,7 @@ namespace HovercraftSerComGUI
             }
         }
 
+
         /// <summary>
         /// Verifies that the frame captured by ReceiveFrame conforms to
         /// protocol specifications.
@@ -265,14 +294,56 @@ namespace HovercraftSerComGUI
         /// <param name="data"></param>
         private void ParseIncomingBuffer(byte[] data)
         {
-            // TODO More than print contents.
+            // Add more sensor parsing here
 
+            // Parse temperature reading
+            if (data[2] == 0x2D)
+                ParseTemp(data);
+
+            // Print data contents
             foreach (byte b in data)
             {
                 Console.WriteLine("" + b);
             }
 
             Invoke((MethodInvoker)delegate { rcvdLabel.Text = "0x" + ByteArrayToHexStr(data); });
+        }
+
+        /// <summary>
+        /// Communicates with MCU to sample data from remote sensor attached to sensor board.
+        /// </summary>
+        private void ReadSensor()
+        {
+            while (connected)
+            {
+                // Prepare data frame
+                byte[] data = new byte[8];
+
+                data[0] = 0xAA; // start sync
+                data[1] = 0x55;
+                data[2] = 0x2D; // opcode I2C
+                data[3] = 0x02; // bytes to read
+                data[4] = 0x90; // slave address
+                data[5] = 0x00; // register
+                data[6] = 0x55; // end sync
+                data[7] = 0xAA;
+
+                TransmitFrame(data);
+
+                Thread.Sleep(3000);
+            }
+        }
+
+        private void ParseTemp(byte[] data)
+        {
+            double d_c = data[4] + 0.0;
+
+            if (data[5] > 0)
+                d_c += 0.5;
+
+            double d_f = d_c * 1.8 + 32;
+
+            Invoke((MethodInvoker)delegate { TempLabel.Text = d_c.ToString() + " °C\n" + d_f.ToString() + " °F"; });
         }
 
         // Send motor speed data for left, right, or both motors.
@@ -321,7 +392,7 @@ namespace HovercraftSerComGUI
 
                 TransmitFrame(data);
 
-                Thread.Sleep(1);
+                Thread.Sleep(5);
             }
         }
 
@@ -338,6 +409,11 @@ namespace HovercraftSerComGUI
         private string ByteArrayToHexStr(byte[] ba)
         {
             return BitConverter.ToString(ba).Replace("-", "");
+        }
+
+        private void TempLabel_Click(object sender, EventArgs e)
+        {
+            Application.DoEvents();
         }
     }
 }

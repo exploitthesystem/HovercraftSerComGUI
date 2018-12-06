@@ -55,6 +55,9 @@
             this.comBox = new System.Windows.Forms.ComboBox();
             this.FanButton = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
+            this.TempLabel = new System.Windows.Forms.Label();
+            this.SenseButton = new System.Windows.Forms.Button();
+            this.label15 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.leftMotorBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.rightMotorBar)).BeginInit();
             this.SuspendLayout();
@@ -84,7 +87,7 @@
             // opTextBox
             // 
             this.opTextBox.Location = new System.Drawing.Point(13, 58);
-            this.opTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.opTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.opTextBox.Name = "opTextBox";
             this.opTextBox.Size = new System.Drawing.Size(66, 20);
             this.opTextBox.TabIndex = 9;
@@ -113,7 +116,7 @@
             // lengthTextBox
             // 
             this.lengthTextBox.Location = new System.Drawing.Point(155, 57);
-            this.lengthTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.lengthTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.lengthTextBox.Name = "lengthTextBox";
             this.lengthTextBox.Size = new System.Drawing.Size(38, 20);
             this.lengthTextBox.TabIndex = 14;
@@ -132,7 +135,7 @@
             // dataTextBox
             // 
             this.dataTextBox.Location = new System.Drawing.Point(316, 57);
-            this.dataTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dataTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.dataTextBox.Name = "dataTextBox";
             this.dataTextBox.Size = new System.Drawing.Size(74, 20);
             this.dataTextBox.TabIndex = 16;
@@ -173,7 +176,7 @@
             // 
             this.rwCheckBox.AutoSize = true;
             this.rwCheckBox.Location = new System.Drawing.Point(102, 61);
-            this.rwCheckBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.rwCheckBox.Margin = new System.Windows.Forms.Padding(2);
             this.rwCheckBox.Name = "rwCheckBox";
             this.rwCheckBox.Size = new System.Drawing.Size(15, 14);
             this.rwCheckBox.TabIndex = 21;
@@ -182,7 +185,7 @@
             // regStartTextBox
             // 
             this.regStartTextBox.Location = new System.Drawing.Point(226, 57);
-            this.regStartTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.regStartTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.regStartTextBox.Name = "regStartTextBox";
             this.regStartTextBox.Size = new System.Drawing.Size(38, 20);
             this.regStartTextBox.TabIndex = 22;
@@ -244,7 +247,7 @@
             // SendButton
             // 
             this.SendButton.Location = new System.Drawing.Point(341, 253);
-            this.SendButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.SendButton.Margin = new System.Windows.Forms.Padding(2);
             this.SendButton.Name = "SendButton";
             this.SendButton.Size = new System.Drawing.Size(56, 19);
             this.SendButton.TabIndex = 32;
@@ -257,7 +260,7 @@
             this.SyncMotorBox.Checked = true;
             this.SyncMotorBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.SyncMotorBox.Location = new System.Drawing.Point(344, 158);
-            this.SyncMotorBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.SyncMotorBox.Margin = new System.Windows.Forms.Padding(2);
             this.SyncMotorBox.Name = "SyncMotorBox";
             this.SyncMotorBox.Size = new System.Drawing.Size(15, 14);
             this.SyncMotorBox.TabIndex = 33;
@@ -290,7 +293,7 @@
             // 
             this.leftMotorBar.LargeChange = 32;
             this.leftMotorBar.Location = new System.Drawing.Point(102, 127);
-            this.leftMotorBar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.leftMotorBar.Margin = new System.Windows.Forms.Padding(2);
             this.leftMotorBar.Maximum = 1024;
             this.leftMotorBar.Name = "leftMotorBar";
             this.leftMotorBar.Size = new System.Drawing.Size(235, 45);
@@ -299,14 +302,13 @@
             this.leftMotorBar.TickFrequency = 32;
             this.leftMotorBar.TickStyle = System.Windows.Forms.TickStyle.Both;
             this.leftMotorBar.Value = 256;
-            this.leftMotorBar.Scroll += new System.EventHandler(Bar_Scroll);
-
+            this.leftMotorBar.Scroll += new System.EventHandler(this.Bar_Scroll);
             // 
             // rightMotorBar
             // 
             this.rightMotorBar.LargeChange = 32;
             this.rightMotorBar.Location = new System.Drawing.Point(102, 171);
-            this.rightMotorBar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.rightMotorBar.Margin = new System.Windows.Forms.Padding(2);
             this.rightMotorBar.Maximum = 1024;
             this.rightMotorBar.Name = "rightMotorBar";
             this.rightMotorBar.Size = new System.Drawing.Size(235, 45);
@@ -315,24 +317,23 @@
             this.rightMotorBar.TickFrequency = 32;
             this.rightMotorBar.TickStyle = System.Windows.Forms.TickStyle.Both;
             this.rightMotorBar.Value = 256;
-            this.rightMotorBar.Scroll += new System.EventHandler(Bar_Scroll);
-
+            this.rightMotorBar.Scroll += new System.EventHandler(this.Bar_Scroll);
             // 
             // comBox
             // 
             this.comBox.FormattingEnabled = true;
             this.comBox.Location = new System.Drawing.Point(102, 98);
-            this.comBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.comBox.Margin = new System.Windows.Forms.Padding(2);
             this.comBox.Name = "comBox";
             this.comBox.Size = new System.Drawing.Size(92, 21);
             this.comBox.TabIndex = 38;
-            this.comBox.Click += new System.EventHandler(this.COMbox_Click);
             this.comBox.SelectedIndexChanged += new System.EventHandler(this.COMbox_SelectIndexChanged);
+            this.comBox.Click += new System.EventHandler(this.COMbox_Click);
             // 
             // FanButton
             // 
             this.FanButton.Location = new System.Drawing.Point(344, 199);
-            this.FanButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.FanButton.Margin = new System.Windows.Forms.Padding(2);
             this.FanButton.Name = "FanButton";
             this.FanButton.Size = new System.Drawing.Size(56, 31);
             this.FanButton.TabIndex = 39;
@@ -351,11 +352,47 @@
             this.label14.TabIndex = 40;
             this.label14.Text = "Lift Fan";
             // 
+            // TempLabel
+            // 
+            this.TempLabel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.TempLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 27.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.TempLabel.Location = new System.Drawing.Point(416, 127);
+            this.TempLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.TempLabel.Name = "TempLabel";
+            this.TempLabel.Size = new System.Drawing.Size(188, 144);
+            this.TempLabel.TabIndex = 41;
+            this.TempLabel.Click += new System.EventHandler(this.TempLabel_Click);
+            // 
+            // SenseButton
+            // 
+            this.SenseButton.Location = new System.Drawing.Point(548, 101);
+            this.SenseButton.Margin = new System.Windows.Forms.Padding(2);
+            this.SenseButton.Name = "SenseButton";
+            this.SenseButton.Size = new System.Drawing.Size(56, 19);
+            this.SenseButton.TabIndex = 42;
+            this.SenseButton.Text = "Sense";
+            this.SenseButton.UseVisualStyleBackColor = true;
+            this.SenseButton.Click += new System.EventHandler(this.SenseButton_Click);
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(412, 99);
+            this.label15.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(111, 20);
+            this.label15.TabIndex = 43;
+            this.label15.Text = "Temperature";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(406, 280);
+            this.ClientSize = new System.Drawing.Size(615, 280);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.SenseButton);
+            this.Controls.Add(this.TempLabel);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.FanButton);
             this.Controls.Add(this.comBox);
@@ -384,9 +421,9 @@
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
-            this.Text = "Serial Test";
+            this.Text = "Hovercraft Serial";
             ((System.ComponentModel.ISupportInitialize)(this.leftMotorBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.rightMotorBar)).EndInit();
             this.ResumeLayout(false);
@@ -422,6 +459,9 @@
         private System.Windows.Forms.ComboBox comBox;
         private System.Windows.Forms.Button FanButton;
         private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label TempLabel;
+        private System.Windows.Forms.Button SenseButton;
+        private System.Windows.Forms.Label label15;
     }
 }
 
