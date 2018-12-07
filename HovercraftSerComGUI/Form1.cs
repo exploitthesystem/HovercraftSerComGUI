@@ -125,9 +125,9 @@ namespace HovercraftSerComGUI
                 {
                     serialPort.Open();
                     Thread recThread = new Thread(ReceiveFrame);
-                    //Thread senseThread = new Thread(ReadSensor);
+                    Thread senseThread = new Thread(ReadSensor);
                     recThread.Start();
-                    //senseThread.Start();
+                    senseThread.Start();
                     connected = true;
                     sem.Release(1);
                 }
@@ -215,7 +215,7 @@ namespace HovercraftSerComGUI
             }
             catch (Exception)
             {
-                rcvdLabel.Text = "ERROR. Could not send.";
+                Invoke((MethodInvoker)delegate { rcvdLabel.Text = "ERROR. Could not send."; });
             }
 
             sem.Release();
@@ -226,11 +226,11 @@ namespace HovercraftSerComGUI
         /// Reads from serial port buffer and checks for start sync (0xAA55)
         /// and end sync (0x55AA) sequences.
         /// </summary>
-        uint CLEAR_BUFF_TIMEOUT = 2000000000;
+        uint CLEAR_BUFF_TIMEOUT = 20000000;
 
         private void ReceiveFrame()
         {
-            byte[] inBuffer = new byte[64];
+            byte[] inBuffer = new byte[1024];
             uint clearBuffCounter = 0;
             uint bytesInBuffer = 0;
 
@@ -248,9 +248,8 @@ namespace HovercraftSerComGUI
                             bytesInBuffer = 0;
                         else
                             bytesInBuffer++;
-
                     }
-                  
+
                     //CHECK
                     if (bytesInBuffer > 5 && CheckValidFrame(inBuffer, bytesInBuffer))
                     {
@@ -261,6 +260,8 @@ namespace HovercraftSerComGUI
 
                     clearBuffCounter = 0;
                 }
+                else
+                    clearBuffCounter++;
 
                 if (clearBuffCounter > CLEAR_BUFF_TIMEOUT)
                 {
